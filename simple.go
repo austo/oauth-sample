@@ -39,10 +39,11 @@ func main() {
 
 	http.HandleFunc("/secret", authHandler.HandleSecret)
 
+	// Check access
+	http.HandleFunc("/check", authHandler.CheckAccess)
+
 	// Application destination - CODE
 	http.HandleFunc("/appauth/code", handleCode)
-
-	http.HandleFunc("/check", authHandler.CheckAccess)
 
 	http.ListenAndServe("127.0.0.1:14000", nil)
 }

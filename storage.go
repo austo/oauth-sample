@@ -27,6 +27,12 @@ func NewStorage() *Storage {
 		RedirectUri: "http://localhost:14000/appauth",
 	}
 
+	r.clients["1"] = &osin.DefaultClient{
+		Id:          "1",
+		Secret:      "Cheesecake",
+		RedirectUri: "http://localhost:7396/login/fetchtoken",
+	}
+
 	return r
 }
 

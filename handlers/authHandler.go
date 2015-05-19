@@ -69,7 +69,10 @@ func (ah *AuthHandler) HandleAuthorization(w http.ResponseWriter, r *http.Reques
 	}
 	if resp.IsError && resp.InternalError != nil {
 		fmt.Printf("ERROR: %s\n", resp.InternalError)
+		w.WriteHeader(500)
+		return
 	}
+	// Library function will redirect if necessary
 	osin.OutputJSON(resp, w, r)
 }
 
@@ -123,18 +126,6 @@ type checkAccessResponse struct {
 }
 
 func (ah *AuthHandler) CheckAccess(w http.ResponseWriter, r *http.Request) {
-	/* POST request with following request body:
-	{
-		"access_token": "str",
-	"scope" "path of original url"
-	}
-
-	returns authorized/unauthorized response code and following body: {
-		"expires_in" : time-from-now (seconds)
-		(possibly refresh token)
-	}
-	*/
-
 	decoder := json.NewDecoder(r.Body)
 	var checkReq checkAccessRequest
 	err := decoder.Decode(&checkReq)
@@ -169,6 +160,7 @@ func (ah *AuthHandler) CheckAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(200)
+	w.Header().Add("Content-Type", "application/json")
 	return
 }
 

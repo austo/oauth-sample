@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/RangelReale/osin"
 	"net/http"
 	"net/url"
+	"strings"
+	"time"
 )
 
 const (
@@ -107,6 +110,66 @@ func (ah *AuthHandler) HandleToken(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("ERROR: %s\n", resp.InternalError)
 	}
 	osin.OutputJSON(resp, w, r)
+}
+
+type checkAccessRequest struct {
+	AccessToken string `json:"access_token"`
+	RequestUri  string `json:"request_uri"`
+}
+
+type checkAccessResponse struct {
+	ExpiresIn    int32  `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+func (ah *AuthHandler) CheckAccess(w http.ResponseWriter, r *http.Request) {
+	/* POST request with following request body:
+	{
+		"access_token": "str",
+	"scope" "path of original url"
+	}
+
+	returns authorized/unauthorized response code and following body: {
+		"expires_in" : time-from-now (seconds)
+		(possibly refresh token)
+	}
+	*/
+
+	decoder := json.NewDecoder(r.Body)
+	var checkReq checkAccessRequest
+	err := decoder.Decode(&checkReq)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(400)
+		return
+	}
+	accessData, err := ah.server.Storage.LoadAccess(checkReq.AccessToken)
+	if accessData == nil || err != nil {
+		fmt.Println(err)
+		w.WriteHeader(401)
+		return
+	}
+
+	if strings.Index(checkReq.RequestUri, accessData.Scope) != 0 {
+		w.WriteHeader(401)
+		w.Write([]byte("invalid scope"))
+	}
+
+	checkRes := checkAccessResponse{
+		int32(accessData.CreatedAt.Add(
+			time.Duration(accessData.ExpiresIn)*time.Second).Sub(
+			ah.server.Now()) / time.Second),
+		accessData.RefreshToken,
+	}
+	enc := json.NewEncoder(w)
+	err = enc.Encode(checkRes)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(500)
+		return
+	}
+	w.WriteHeader(200)
+	return
 }
 
 func validateLogin(ar *osin.AuthorizeRequest, w http.ResponseWriter, r *http.Request) bool {

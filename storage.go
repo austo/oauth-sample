@@ -30,7 +30,7 @@ func NewStorage() *Storage {
 	r.clients["1"] = &osin.DefaultClient{
 		Id:          "1",
 		Secret:      "Cheesecake",
-		RedirectUri: "http://localhost:7396/login/fetchtoken",
+		RedirectUri: "http://localhost:7396/login",
 	}
 
 	return r
@@ -66,6 +66,7 @@ func (s *Storage) SaveAuthorize(data *osin.AuthorizeData) error {
 func (s *Storage) LoadAuthorize(code string) (*osin.AuthorizeData, error) {
 	fmt.Printf("LoadAuthorize: %s\n", code)
 	if d, ok := s.authorize[code]; ok {
+		fmt.Printf("%#v\n", d)
 		return d, nil
 	}
 	return nil, errors.New("Authorize not found")

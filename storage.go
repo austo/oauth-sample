@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/RangelReale/osin"
+	"os"
 )
 
 type Storage struct {
@@ -30,7 +31,7 @@ func NewStorage() *Storage {
 	r.clients["1"] = &osin.DefaultClient{
 		Id:          "1",
 		Secret:      "Cheesecake",
-		RedirectUri: "http://localhost:7396/login",
+		RedirectUri: getCheesecakeRedirectUrl(),
 	}
 
 	return r
@@ -113,4 +114,14 @@ func (s *Storage) RemoveRefresh(code string) error {
 	fmt.Printf("RemoveRefresh: %s\n", code)
 	delete(s.refresh, code)
 	return nil
+}
+
+func getCheesecakeRedirectUrl() string {
+	var hostname string
+	if h, err := os.Hostname(); err == nil {
+		hostname = h
+	} else {
+		hostname = "localhost"
+	}
+	return fmt.Sprintf("http://%s:7396/login", hostname)
 }

@@ -45,5 +45,5 @@ func main() {
 	// Application destination - CODE
 	http.HandleFunc("/appauth/code", handleCode)
 
-	http.ListenAndServe("127.0.0.1:14000", nil)
+	http.ListenAndServe("0.0.0.0:14000", nil)
 }

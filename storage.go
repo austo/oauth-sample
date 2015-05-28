@@ -59,7 +59,7 @@ func (s *Storage) SetClient(id string, client osin.Client) error {
 }
 
 func (s *Storage) SaveAuthorize(data *osin.AuthorizeData) error {
-	fmt.Printf("SaveAuthorize: %s\n", data.Code)
+	fmt.Printf("SaveAuthorize: %#v\n", data)
 	s.authorize[data.Code] = data
 	return nil
 }

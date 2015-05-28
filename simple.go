@@ -13,6 +13,7 @@ func main() {
 	cfg := osin.NewServerConfig()
 	cfg.AllowGetAccessRequest = true
 	cfg.AllowClientSecretInParams = true
+	cfg.AccessExpiration = 60
 
 	cfg.AllowedAccessTypes = osin.AllowedAccessType{
 		osin.AUTHORIZATION_CODE,

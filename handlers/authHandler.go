@@ -57,6 +57,11 @@ func (ah *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 func (ah *AuthHandler) HandleAuthorization(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("HANDLING AUTHORIZATION REQUEST: %s\n", r.RequestURI)
+	if r.Method != "POST" {
+		w.WriteHeader(405)
+		w.Write([]byte("only POST allowed"))
+		return
+	}
 	resp := ah.server.NewResponse()
 	defer resp.Close()
 
@@ -167,7 +172,10 @@ func (ah *AuthHandler) CheckAccess(w http.ResponseWriter, r *http.Request) {
 func validateLogin(ar *osin.AuthorizeRequest, w http.ResponseWriter, r *http.Request) bool {
 	fmt.Println("validating login")
 	r.ParseForm()
-	if r.Method == "POST" && r.Form.Get("login") == "test" && r.Form.Get("password") == "test" {
+	login, password := r.Form.Get("login"), r.Form.Get("password")
+	if login == "test" && password == "test" {
+		// TODO: function to get user ID from username and password
+		ar.UserData = map[string]string{"username": r.Form.Get("login")}
 		return true
 	}
 	return false

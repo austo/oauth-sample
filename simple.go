@@ -4,12 +4,18 @@ package main
 // http://localhost:14000/app
 
 import (
+	"flag"
 	"github.com/RangelReale/osin"
 	"github.com/austo/oauth-sample/handlers"
 	"net/http"
 )
 
+var (
+	clientPort = flag.String("p", "7396", "DK5 client port")
+)
+
 func main() {
+	flag.Parse()
 	cfg := osin.NewServerConfig()
 	cfg.AllowGetAccessRequest = true
 	cfg.AllowClientSecretInParams = true
@@ -19,7 +25,7 @@ func main() {
 		osin.AUTHORIZATION_CODE,
 		osin.REFRESH_TOKEN}
 
-	server := osin.NewServer(cfg, NewStorage())
+	server := osin.NewServer(cfg, NewStorage(*clientPort))
 
 	authHandler := handlers.NewAuthHandler(server)
 

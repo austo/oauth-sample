@@ -14,7 +14,7 @@ type Storage struct {
 	refresh   map[string]string
 }
 
-func NewStorage() *Storage {
+func NewStorage(redirectPort string) *Storage {
 	r := &Storage{
 		clients:   make(map[string]osin.Client),
 		authorize: make(map[string]*osin.AuthorizeData),
@@ -31,8 +31,10 @@ func NewStorage() *Storage {
 	r.clients["1"] = &osin.DefaultClient{
 		Id:          "1",
 		Secret:      "Cheesecake",
-		RedirectUri: getCheesecakeRedirectUrl(),
+		RedirectUri: getCheesecakeRedirectUrl(redirectPort),
 	}
+
+	fmt.Printf("using %s as port for Cheesecake redirect\n", redirectPort)
 
 	return r
 }
@@ -116,12 +118,12 @@ func (s *Storage) RemoveRefresh(code string) error {
 	return nil
 }
 
-func getCheesecakeRedirectUrl() string {
+func getCheesecakeRedirectUrl(port string) string {
 	var hostname string
 	if h, err := os.Hostname(); err == nil {
 		hostname = h
 	} else {
 		hostname = "localhost"
 	}
-	return fmt.Sprintf("http://%s:7396/login", hostname)
+	return fmt.Sprintf("http://%s:%s/login", hostname, port)
 }

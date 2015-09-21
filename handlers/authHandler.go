@@ -29,13 +29,22 @@ const (
 </html>`
 )
 
+type user struct {
+	id       int
+	name     string
+	password string
+}
+
 type AuthHandler struct {
 	server *osin.Server
+	users  map[string]user
 }
 
 func NewAuthHandler(s *osin.Server) *AuthHandler {
 	handler := new(AuthHandler)
 	handler.server = s
+	handler.users = make(map[string]user)
+	handler.setUsers()
 	return handler
 }
 
@@ -66,7 +75,7 @@ func (ah *AuthHandler) HandleAuthorization(w http.ResponseWriter, r *http.Reques
 	defer resp.Close()
 
 	if ar := ah.server.HandleAuthorizeRequest(resp, r); ar != nil {
-		if !validateLogin(ar, w, r) {
+		if !ah.validateLogin(ar, w, r) {
 			return
 		}
 		ar.Authorized = true
@@ -169,16 +178,32 @@ func (ah *AuthHandler) CheckAccess(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func validateLogin(ar *osin.AuthorizeRequest, w http.ResponseWriter, r *http.Request) bool {
+func (ah *AuthHandler) validateLogin(ar *osin.AuthorizeRequest, w http.ResponseWriter, r *http.Request) bool {
 	fmt.Println("validating login")
 	r.ParseForm()
 	login, password := r.Form.Get("login"), r.Form.Get("password")
-	if login == "test" && password == "test" {
-		// TODO: function to get user ID from username and password
-		ar.UserData = map[string]string{"username": r.Form.Get("login")}
-		return true
+	if u, ok := ah.users[login]; ok {
+		if password == u.password {
+			ar.UserData = map[string]string{"username": u.name}
+			return true
+		}
 	}
+
 	return false
+}
+
+func (ah *AuthHandler) setUsers() {
+	ah.users["test"] = user{
+		id:       1,
+		name:     "test",
+		password: "test",
+	}
+
+	ah.users["Nebuadmin"] = user{
+		id:       7404,
+		name:     "Nebuadmin",
+		password: "Ch@ng3m3!",
+	}
 }
 
 func getLoginPage(ar *osin.AuthorizeRequest) string {

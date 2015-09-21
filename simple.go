@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	clientPort = flag.String("p", "7396", "DK5 client port")
+	clientPort     = flag.String("p", "7396", "DK5 client port")
+	clientHostname = flag.String("c", "", "DK5 client hostname")
 )
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 		osin.AUTHORIZATION_CODE,
 		osin.REFRESH_TOKEN}
 
-	server := osin.NewServer(cfg, NewStorage(*clientPort))
+	server := osin.NewServer(cfg, NewStorage(*clientHostname, *clientPort))
 
 	authHandler := handlers.NewAuthHandler(server)
 

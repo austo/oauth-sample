@@ -1,4 +1,4 @@
-DK5_PATH=/Users/austin_moran/devProjects/ssi/dk5-middle-tier/etc/oauth
+DK5_PATH=/Users/austin_moran/Development/ssi/dk5-middle-tier/etc/oauth
 
 all:
 	goxc -bc='linux,darwin,windows,!386,!arm' -d bin xc

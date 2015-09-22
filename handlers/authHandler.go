@@ -6,6 +6,7 @@ import (
 	"github.com/RangelReale/osin"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -28,6 +29,8 @@ const (
 
 </html>`
 )
+
+var bearerAuthRe = regexp.MustCompile("^Bearer\\s([\\w\\-]+)$")
 
 type user struct {
 	id       int
@@ -166,6 +169,9 @@ func (ah *AuthHandler) CheckAccess(w http.ResponseWriter, r *http.Request) {
 			ah.server.Now()) / time.Second),
 		accessData.RefreshToken,
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+
 	enc := json.NewEncoder(w)
 	err = enc.Encode(checkRes)
 	if err != nil {
@@ -174,8 +180,58 @@ func (ah *AuthHandler) CheckAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(200)
-	w.Header().Add("Content-Type", "application/json")
 	return
+}
+
+func (ah *AuthHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+
+	if !ah.isAuthorized(r) {
+		sendNotAuthorized(&w, "did not pass step 1")
+		return
+	}
+
+	header, ok := r.Header["Authorization"]
+	if !ok {
+		sendNotAuthorized(&w, "did not pass step 2")
+		return
+	}
+
+	if len(header) < 1 {
+		sendNotAuthorized(&w, "did not pass step 3")
+		return
+	}
+
+	tokenMatch := bearerAuthRe.FindStringSubmatch(header[0])
+	if tokenMatch == nil {
+		sendNotAuthorized(&w, "did not pass step 4")
+		return
+	}
+
+	token := tokenMatch[1]
+
+	accessData, err := ah.server.Storage.LoadAccess(token)
+	if accessData == nil || err != nil {
+		sendNotAuthorized(&w, "did not pass step 5")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	err = enc.Encode(accessData.UserData)
+	if err != nil {
+		fmt.Println(err)
+		sendNotAuthorized(&w, "did not pass step 6")
+		return
+	}
+}
+
+func sendNotAuthorized(w *http.ResponseWriter, msg string) {
+	if msg == "" {
+		msg = "not authorized"
+	}
+	(*w).Header().Set("Content-Type", "application/json")
+	(*w).WriteHeader(401)
+	(*w).Write([]byte(fmt.Sprintf("{\"message\": \"%s\"}", msg)))
 }
 
 func (ah *AuthHandler) validateLogin(ar *osin.AuthorizeRequest, w http.ResponseWriter, r *http.Request) bool {
@@ -184,7 +240,7 @@ func (ah *AuthHandler) validateLogin(ar *osin.AuthorizeRequest, w http.ResponseW
 	login, password := r.Form.Get("login"), r.Form.Get("password")
 	if u, ok := ah.users[login]; ok {
 		if password == u.password {
-			ar.UserData = map[string]string{"username": u.name}
+			ar.UserData = map[string]interface{}{"username": u.name, "userId": u.id}
 			return true
 		}
 	}
@@ -192,6 +248,7 @@ func (ah *AuthHandler) validateLogin(ar *osin.AuthorizeRequest, w http.ResponseW
 	return false
 }
 
+// TODO: set from json file, gitignore that file, then push to github
 func (ah *AuthHandler) setUsers() {
 	ah.users["test"] = user{
 		id:       1,

@@ -50,6 +50,8 @@ func main() {
 	// Check access
 	http.HandleFunc("/check", authHandler.CheckAccess)
 
+	http.HandleFunc("/userinfo", authHandler.GetUserInfo)
+
 	// Application destination - CODE
 	http.HandleFunc("/appauth/code", handleCode)
 

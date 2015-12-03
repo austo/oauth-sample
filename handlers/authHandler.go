@@ -240,7 +240,7 @@ func (ah *AuthHandler) validateLogin(ar *osin.AuthorizeRequest, w http.ResponseW
 	login, password := r.Form.Get("login"), r.Form.Get("password")
 	if u, ok := ah.users[login]; ok {
 		if password == u.password {
-			ar.UserData = map[string]interface{}{"username": u.name, "userId": u.id}
+			ar.UserData = map[string]interface{}{"preferred_username": u.name, "sub": u.id}
 			return true
 		}
 	}
